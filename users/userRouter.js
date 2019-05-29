@@ -1,14 +1,11 @@
 const express = require('express');
-const db = require('./userDb.js');
+const userDb = require('./userDb.js');
 const router = express.Router();
 
-router.post('/', (req, res) => {
+router.post('/', validateUser, (req, res) => {
   const newUser = req.body;
-  if(!newUser.name) {
-    res.status(400).json({ error: 'Please provide a name for the user.'});
-  }
 
-  db.insert(newUser)
+  userDb.insert(newUser)
     .then( user => {
       res.status(200).json({ user });
     })
@@ -23,7 +20,7 @@ router.post('/:id/posts', (req, res) => {
 
 router.get('/', (req, res) => {
 
-  db.get()
+  userDb.get()
     .then( users => {
       res.status(200).json({ users });
     })
@@ -33,21 +30,21 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', validateUserId, (req, res) => {
-  const { id } = req.params;
 
-  db.getById(id)
-    .then( user => {
-        res.status(200).json({ user });
-      })
-    .catch( err => {
-      res.status(500).json({ error: "The user information could not be retrieved." });
-    })
+  res.status(200).json( req.user )
+  // userDb.getById(id)
+  //   .then( user => {
+  //       res.status(200).json({ user });
+  //     })
+  //   .catch( err => {
+  //     res.status(500).json({ error: "The user information could not be retrieved." });
+  //   })
 });
 
 router.get('/:id/posts', validateUserId, (req, res) => {
   const { id } = req.params;
 
-  db.getUserPosts(id)
+  userDb.getUserPosts(id)
     .then( posts => {
       res.status(200).json({ posts });
     })
@@ -59,7 +56,7 @@ router.get('/:id/posts', validateUserId, (req, res) => {
 router.delete('/:id', validateUserId, (req, res) => {
   const { id } = req.params;
 
-  db.remove(id)
+  userDb.remove(id)
     .then( user => {
       res.status(204).json({ user })
     })
@@ -68,14 +65,13 @@ router.delete('/:id', validateUserId, (req, res) => {
     })
 });
 
-router.put('/:id', validateUserId, (req, res) => {
+router.put('/:id', validateUserId, validateUser, (req, res) => {
   const updatedUser = req.body;
   const { id } = req.params;
-  if(!updatedUser.name) {
-    res.status(400).json({ error: 'Please provide a name for the user.'});
-  }
+  console.log(updatedUser);
+  console.log(id);
 
-  db.update(id, updatedUser)
+  userDb.update(id, updatedUser)
     .then( user => {
        res.status(204).json({ user })
     })
@@ -89,7 +85,7 @@ router.put('/:id', validateUserId, (req, res) => {
 function validateUserId(req, res, next) {
   const { id } = req.params;
 
-  db.getById(id)
+  userDb.getById(id)
     .then( user => {
       if(user) {
         req.user = user;
@@ -104,7 +100,12 @@ function validateUserId(req, res, next) {
 };
 
 function validateUser(req, res, next) {
-
+  const { name } = req.body;
+  if(name) {
+    next();
+  } else {
+    res.status(400).json({ message: 'Missing required name field.' })
+  }
 };
 
 function validatePost(req, res, next) {

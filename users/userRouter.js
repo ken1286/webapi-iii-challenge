@@ -3,6 +3,10 @@ const userDb = require('./userDb.js');
 const postDb = require('../posts/postDb.js');
 const router = express.Router();
 
+// const postRouter = require('../posts/postRouter.js');
+
+// router.use('/:id/posts', validateUserId, postRouter);
+
 router.post('/', validateUser, (req, res) => {
   const newUser = req.body;
 
